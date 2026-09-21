@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Récurrence – Format TikTok 9:16</title>
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+    }
+
+    body {
+      position: relative;
+    }
+
+    #frame {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1080px;
+      height: 1920px;
+      transform-origin: center center;
+      background: radial-gradient(circle at 50% 18%, #121a33 0%, #030303 72%);
+      overflow: hidden;
+      font-size: 42px;
+    }
+
+    #lines {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+
+    #lines::-webkit-scrollbar {
+      display: none;
+    }
+
+    #content {
+      min-height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.62em;
+      padding: 2.8em 1.8em;
+    }
+
+    .line {
+      white-space: pre-line;
+      line-height: 1.35;
+      font-family: "Cambria Math", "STIX Two Math", Georgia, "Times New Roman", serif;
+      color: #fff;
+      opacity: 0.97;
+    }
+
+    .line.small {
+      font-size: 0.84em;
+    }
+
+    .line.titre {
+      font-size: 1.05em;
+      font-weight: 600;
+    }
+
+    .line.cqfd {
+      font-size: 1.25em;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .line.current {
+      text-shadow: 0 0 0.45em currentColor;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 0.05em;
+      height: 1em;
+      background: currentColor;
+      margin-left: 0.08em;
+      vertical-align: -0.12em;
+      animation: blink 0.9s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      50.01%, 100% { opacity: 0; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="frame">
+    <div id="lines">
+      <div id="content"></div>
+    </div>
+  </div>
+
+  <script>
+    const frame = document.getElementById("frame");
+    const scrollBox = document.getElementById("lines");
+    const content = document.getElementById("content");
+
+    function ajuster() {
+      const scale = Math.min(
+        window.innerWidth / 1080,
+        window.innerHeight / 1920
+      );
+
+      frame.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    }
+
+    window.addEventListener("resize", ajuster);
+    ajuster();
+
+    const lignes = [
+      {
+        texte: "Montrer : n³ - n est un multiple de 3",
+        couleur: "#ffffff",
+        classe: "titre"
+      },
+      {
+        texte: "Démonstration par récurrence",
+        couleur: "#ffd166"
+      },
+      {
+        texte: "Pour n ≥ 0, soit P(n) :\nn³ - n est divisible par 3",
+        couleur: "#64d8ff"
+      },
+      {
+        texte: "Initialisation : n = 0",
+        couleur: "#57ff9a"
+      },
+      {
+        texte: "0³ - 0 = 0 = 3 × 0",
+        couleur: "#57ff9a"
+      },
+      {
+        texte: "Donc P(0) est vraie",
+        couleur: "#57ff9a"
+      },
+      {
+        texte: "Hérédité : supposons P(k) vraie",
+        couleur: "#ffb347"
+      },
+      {
+        texte: "Alors k³ - k = 3m, avec m entier",
+        couleur: "#ffd97d"
+      },
+      {
+        texte: "On calcule :",
+        couleur: "#c792ff"
+      },
+      {
+        texte: "(k + 1)³ - (k + 1)\n= k³ + 3k² + 3k + 1 - k - 1",
+        couleur: "#c792ff"
+      },
+      {
+        texte: "= (k³ - k) + 3k² + 3k",
+        couleur: "#9ad7ff"
+      },
+      {
+        texte: "= 3m + 3(k² + k)\n= 3(m + k² + k)",
+        couleur: "#ff8fab"
+      },
+      {
+        texte: "Donc P(k + 1) est vraie",
+        couleur: "#ffe066"
+      },
+      {
+        texte: "Conclusion : par récurrence,\nn³ - n est multiple de 3\npour tout n ≥ 0",
+        couleur: "#7cffcb"
+      },
+      {
+        texte: "CQFD",
+        couleur: "#00ff88",
+        classe: "cqfd"
+      }
+    ];
+
+    const TOTAL = 60000;
+    const SEGMENT = TOTAL / lignes.length;
+    const ECRITURE = SEGMENT * 0.6;
+    const PAUSE = SEGMENT - ECRITURE;
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function ecrire(element, texte, duree) {
+      return new Promise(resolve => {
+        const debut = performance.now();
+
+        function frameAnimation(maintenant) {
+          const t = Math.min(duree, maintenant - debut);
+
+          const nbCaracteres = Math.min(
+            texte.length,
+            Math.ceil((t / duree) * texte.length)
+          );
+
+          element.textContent = texte.slice(0, nbCaracteres);
+
+          scrollBox.scrollTop = scrollBox.scrollHeight;
+
+          if (t >= duree) {
+            resolve();
+          } else {
+            requestAnimationFrame(frameAnimation);
+          }
+        }
+
+        requestAnimationFrame(frameAnimation);
+      });
+    }
+
+    async function jouer() {
+      for (const ligne of lignes) {
+        const lineEl = document.createElement("div");
+
+        lineEl.className = "line";
+
+        if (ligne.classe) {
+          lineEl.classList.add(ligne.classe);
+        } else if (ligne.texte.length > 55) {
+          lineEl.classList.add("small");
+        }
+
+        lineEl.style.color = ligne.couleur;
+        lineEl.classList.add("current");
+
+        const textSpan = document.createElement("span");
+        const cursor = document.createElement("span");
+        cursor.className = "cursor";
+
+        lineEl.appendChild(textSpan);
+        lineEl.appendChild(cursor);
+
+        content.appendChild(lineEl);
+
+        scrollBox.scrollTop = scrollBox.scrollHeight;
+
+        await ecrire(textSpan, ligne.texte, ECRITURE);
+
+        cursor.remove();
+
+        await sleep(PAUSE);
+
+        lineEl.classList.remove("current");
+      }
+    }
+
+    jouer();
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key.toLowerCase() === "r") {
+        location.reload();
+      }
+    });
+  </script>
+
+</body>
+</html>
